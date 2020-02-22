@@ -23,7 +23,7 @@ import copy
 # import socket
 import os  # writing to path
 import sigfig  # rounding for plots
-from textwrap import wrap
+from textwrap3 import wrap
 # from mpi4py import MPI
 
 # save temporary data

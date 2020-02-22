@@ -5,7 +5,7 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 6001
+size = 61
 steps = 1
 
 # starting dimension, range of dimensions
@@ -13,7 +13,7 @@ dimLow = 2
 dimRange = 1
 
 # temperature
-tempLow = 150  # Kelvins
+tempLow = 145  # Kelvins
 deltaTemp = 5
 numOfTemps = 1
 # k = 1
