@@ -10,27 +10,29 @@ import time
 import copy
 
 # a powerful plotter package for jupyter-notebook
-import bokeh
-from bokeh.plotting import figure, output_file, show, save
-from bokeh.io import output_notebook
+# import bokeh
+# from bokeh.plotting import figure, output_file, show, save
+# from bokeh.io import output_notebook
 
 # extend the cell width of the jupyter notebook
-from IPython.core.display import display, HTML
+# from IPython.core.display import display, HTML
 # display(HTML("<style>.container { width:100% !important; }</style>"))
 
 # paralell computing
-import ipyparallel
+# import ipyparallel
 import socket
 import os
-from mpi4py import MPI
+import sigfig  # rounding for plots
+from textwrap3 import wrap
+# from mpi4py import MPI
 
 # save temporary data
-import csv
+# import csv
 
 import matplotlib as mpl
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-from matplotlib.animation import FuncAnimation
+# from matplotlib.animation import FuncAnimation
 # output_notebook()
 
 # -------------------------------------------------------------------------------
@@ -57,7 +59,7 @@ class Ising:
         # not running, need fixing!!!
         self.ground = np.full(self.spec, 0)
         # storage of magnetization time series: timestamp, total magnetization
-        self.magnetizationTimeSeries = [[], []]
+        self.systemDataTimeSeries = [[], [], []]
 
         # define the 2d system with or without initial values
         spins = [1, -1]
@@ -70,18 +72,47 @@ class Ising:
         choices = list(range(self.n**self.d))
 
         # warning: optimization only works in odd sized dimensions!!!
-        oddSites = choices[0::2]
-        # evenSites = choices[1::2]
+        zerothSites = choices[0::4]
+        firstSites = choices[1::4]
+        secondSites = choices[2::4]
+        thirdSites = choices[3::4]
+
         self.dimensions = range(self.d)
-        self.oddLattice = np.full(self.spec, False)
-        for choice in oddSites:
-            self.oddLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
-        self.evenLattice = np.invert(copy.deepcopy(self.oddLattice))
-        # iniitalize initial energies to zero
-        self.interactionEnergies = np.full(self.spec, 0)
+
+        self.zerothLattice = np.full(self.spec, False)
+        for choice in zerothSites:
+            self.zerothLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+
+        # self.dimensions = range(self.d)
+        self.firstLattice = np.full(self.spec, False)
+        for choice in firstSites:
+            self.firstLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+
+        # self.dimensions = range(self.d)
+        self.secondLattice = np.full(self.spec, False)
+        for choice in secondSites:
+            self.secondLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+
+        # self.dimensions = range(self.d)
+        self.thirdLattice = np.full(self.spec, False)
+        for choice in thirdSites:
+            self.thirdLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+        # print(self.thirdLattice)
+        # in each step randomly update all sublattices
+        self.sublattices = np.array([np.asnumpy(self.zerothLattice), np.asnumpy(self.firstLattice), np.asnumpy(self.secondLattice), np.asnumpy(self.thirdLattice)])
+
+        # self.evenLattice = np.invert(copy.deepcopy(self.oddLattice))
+        # iniitalize initial energies using initial state
+        self.updateEnergies()
+
+        # save initial system data at time stamp=0
+        self.systemDataTimeSeries[0].append(self.timeStep)
+        self.systemDataTimeSeries[1].append(self.totalMagnetization())
+        # care: coordination number normalization when accounting for total energy
+        self.systemDataTimeSeries[2].append(np.sum(self.interactionEnergies) / 2)
 
     def totalMagnetization(self):
-        return self.m * sum(self.system[tuple([int(np.floor(posi % self.n**(x+1) / self.n**x)) for x in self.dimensions])] for posi in self.dimensions)
+        return self.m * np.sum(self.system)
 
     def localEnergy(self, coords):  # periodic bc
         # coords a list contain d integer indices to specify the ising lattice in d dimensional space
@@ -104,6 +135,8 @@ class Ising:
                 (-self.j) * ( np.array(convolve(np.asnumpy(self.system), np.asnumpy(self.kernel), mode='wrap')) - self.system) * self.system + \
                 self.m * self.h * self.system
 
+    # deprecated
+    """
     def flip(self, coords):
         energy = self.localEnergy(coords)
         # print(energy)
@@ -114,6 +147,27 @@ class Ising:
             boltzmanFactor = np.exp(2*energy/(self.k * self.t))
             # p = random.uniform(0, 1)
             if random.randint(0, 1) < boltzmanFactor: self.system[coords] = -self.system[coords]
+    """
+
+    def visualizeMagnetization(self, path="noPath.png", hyperplane=None):
+        # plots the total magnetization with time
+        plt.close()
+        fig = plt.figure()
+        plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[1], "+k")
+        plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
+        plt.xlabel("Time steps / a.u.")
+        plt.ylabel("Total magnetization / Am^2")
+        return fig
+
+    def visualizeTotalEnergy(self, path="noPath.png", hyperplane=None):
+        # plots the total magnetization with time
+        plt.close()
+        fig = plt.figure()
+        plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[2], "+k")
+        plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
+        plt.xlabel("Time steps / a.u.")
+        plt.ylabel("Total energy / J")
+        return fig
 
     def visualizeTwoDGrid(self, path="noPath.png", hyperplane=None):
         # safety measure: close all plots
@@ -123,7 +177,7 @@ class Ising:
         bounds = [-1, 0, 1]
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
         # data reshape
-        data = copy.deepcopy(self.system[hyperplane])
+        data = copy.deepcopy(np.asnumpy(self.system[hyperplane]))
         if data.shape == tuple([self.n, self.n]):
             pass
         else:
@@ -141,45 +195,29 @@ class Ising:
         return fig
         # plt.close()
 
+    def updateSublattice(self, sublattice):
+        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
+        evenDist = np.random.uniform(0, 1, size=self.spec)
+        temp1 = np.greater(self.interactionEnergies, self.ground)
+        temp2 = np.greater(boltzmanFactor, evenDist)
+        criteria = np.logical_and(sublattice, np.logical_or(temp1, temp2))
+        self.system = np.where(criteria, -self.system, self.system)
+        self.updateEnergies()
+
     def stepForward(self):
-        # stepping through the lattice and update randomly
-        # improved method: divide into two sub-lattices and vectorize for each sub lattice to allow batch processing
-        # note that a site cannot be updated twice within a single step, and two neighbouring sites should not be updated simultaneously
-        self.timeStep = self.timeStep+1
-        # oddSites
-        self.updateEnergies()
-        # print(2*self.interactionEnergies/self.k * self.t)
-        # print(self.interactionEnergies)
-        boltzmanFactor = np.exp(2*self.interactionEnergies/(self.k * self.t))
-        # print(boltzmanFactor)
-        evenDist = np.random.uniform(0, 1, size=self.spec)
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        # print("temp1")
-        # print(temp1)
-        # print("temp2")
-        # print(temp2)
-        # print("evenDist")
-        # print(evenDist)
-        criteria = np.logical_and(self.oddLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
-        # evenSites
-        self.updateEnergies()
-        # print(2*self.interactionEnergies/self.k * self.t)
-        # print(self.interactionEnergies)
-        boltzmanFactor = np.exp(2*self.interactionEnergies/(self.k * self.t))
-        # print(boltzmanFactor)
-        evenDist = np.random.uniform(0, 1, size=self.spec)
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        # print("temp1")
-        # print(temp1)
-        # print("temp2")
-        # print(temp2)
-        # print("evenDist")
-        # print(evenDist)
-        criteria = np.logical_and(self.evenLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
+        self.timeStep = self.timeStep + 1
+
+        np.random.shuffle(self.sublattices)
+        # print(self.sublattices[0])
+        for sublattice in self.sublattices:
+            self.updateSublattice(sublattice)
+
+        # record system data
+        self.systemDataTimeSeries[0].append(self.timeStep)
+        self.systemDataTimeSeries[1].append(self.totalMagnetization())
+        # care: coordination number normalization when accounting for total energy to avoid double counting
+        self.systemDataTimeSeries[2].append(np.sum(self.interactionEnergies) / 2)
+
 # ----------------------------------------------------------------------------------------
 # calculate the time evolution of a 2 D ising model system given the predefined parameters
 

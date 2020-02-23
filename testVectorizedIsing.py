@@ -70,13 +70,36 @@ class Ising:
         choices = list(range(self.n**self.d))
 
         # warning: optimization only works in odd sized dimensions!!!
-        oddSites = choices[0::2]
-        # evenSites = choices[1::2]
+        zerothSites = choices[0::4]
+        firstSites = choices[1::4]
+        secondSites = choices[2::4]
+        thirdSites = choices[3::4]
+
         self.dimensions = range(self.d)
-        self.oddLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
-        for choice in oddSites:
-            self.oddLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
-        self.evenLattice = np.invert(copy.deepcopy(self.oddLattice))
+        
+        self.zerothLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
+        for choice in zerothSites:
+            self.zerothLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+        
+        # self.dimensions = range(self.d)
+        self.firstLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
+        for choice in firstSites:
+            self.firstLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+        
+        # self.dimensions = range(self.d)
+        self.secondLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
+        for choice in secondSites:
+            self.secondLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+        
+        # self.dimensions = range(self.d)
+        self.thirdLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
+        for choice in thirdSites:
+            self.thirdLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
+       
+        # in each step randomly update all sublattices
+        self.sublattices = np.array([self.zerothLattice, self.firstLattice, self.secondLattice, self.thirdLattice])
+
+        # self.evenLattice = np.invert(copy.deepcopy(self.oddLattice))
         # iniitalize initial energies using initial state
         self.updateEnergies()
         
@@ -167,55 +190,75 @@ class Ising:
         # plt.savefig(path, dpi=1000)
         return fig
         # plt.close()
+    
+
+    # warning: do not run on its own
+    # this is a helper function fo stepForward
+    def updateSublattice(self, sublattice):
+        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
+        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
+        temp1 = np.greater(self.interactionEnergies, self.ground)
+        temp2 = np.greater(boltzmanFactor, evenDist)
+        criteria = np.logical_and(sublattice, np.logical_or(temp1, temp2))
+        self.system = np.where(criteria, -self.system, self.system)
+        self.updateEnergies()
 
     def stepForward(self):
         # stepping through the lattice and update randomly
         # improved method: divide into two sub-lattices and vectorize for each sub lattice to allow batch processing
         # note that a site cannot be updated twice within a single step, and two neighbouring sites should not be updated simultaneously
         self.timeStep = self.timeStep + 1
-        
-        # oddSites
-        # self.updateEnergies()
-        # print(2*self.interactionEnergies/self.k * self.t)
-        # print(self.interactionEnergies)
-        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
-        # print(boltzmanFactor)
-        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        # print("temp1")
-        # print(temp1)
-        # print("temp2")
-        # print(temp2)
-        # print("evenDist")
-        # print(evenDist)
-        criteria = np.logical_and(self.oddLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
-        
-        # evenSites
-        self.updateEnergies()
-        # print(2*self.interactionEnergies/self.k * self.t)
-        # print(self.interactionEnergies)
-        boltzmanFactor = np.exp(2 * self.interactionEnergies/(self.k * self.t))
-        # print(boltzmanFactor)
-        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        # print("temp1")
-        # print(temp1)
-        # print("temp2")
-        # print(temp2)
-        # print("evenDist")
-        # print(evenDist)
-        criteria = np.logical_and(self.evenLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
 
-        # CRITICAL NOTICE: ALL STATE VARIABLES MUST BE UPDATED AFTER A self.system UPDATE
+        np.random.shuffle(self.sublattices)
+        # print(self.sublattices[0])
+        for sublattice in self.sublattices:
+            self.updateSublattice(sublattice)
+
+        # keep the following for record
+        """
+        # zeroth lattice
+        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
+        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
+        temp1 = np.greater(self.interactionEnergies, self.ground)
+        temp2 = np.greater(boltzmanFactor, evenDist)
+        criteria = np.logical_and(self.zerothLattice, np.logical_or(temp1, temp2))
+        self.system = np.where(criteria, -self.system, self.system)
         self.updateEnergies()
+        
+        # first lattice
+        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
+        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
+        temp1 = np.greater(self.interactionEnergies, self.ground)
+        temp2 = np.greater(boltzmanFactor, evenDist)
+        criteria = np.logical_and(self.firstLattice, np.logical_or(temp1, temp2))
+        self.system = np.where(criteria, -self.system, self.system)
+        self.updateEnergies()
+        
+        # second lattice
+        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
+        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
+        temp1 = np.greater(self.interactionEnergies, self.ground)
+        temp2 = np.greater(boltzmanFactor, evenDist)
+        criteria = np.logical_and(self.secondLattice, np.logical_or(temp1, temp2))
+        self.system = np.where(criteria, -self.system, self.system)
+        self.updateEnergies()
+
+        # third lattice
+        boltzmanFactor = np.exp(2 * self.interactionEnergies/(self.k * self.t))
+        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
+        temp1 = np.greater(self.interactionEnergies, self.ground)
+        temp2 = np.greater(boltzmanFactor, evenDist)
+        criteria = np.logical_and(self.thirdLattice, np.logical_or(temp1, temp2))
+        self.system = np.where(criteria, -self.system, self.system)
+        self.updateEnergies()
+        # CRITICAL NOTICE: ALL STATE VARIABLES MUST BE UPDATED AFTER A self.system UPDATE
+        """
+
+
         # record system data
         self.systemDataTimeSeries[0].append(self.timeStep)
         self.systemDataTimeSeries[1].append(self.totalMagnetization())
-        # care: coordination number normalization when accounting for total energy
+        # care: coordination number normalization when accounting for total energy to avoid double counting
         self.systemDataTimeSeries[2].append(np.sum(self.interactionEnergies) / 2)
 
 
