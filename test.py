@@ -5,15 +5,15 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 61
-steps = 1
+size = 101
+steps = 18000
 
 # starting dimension, range of dimensions
 dimLow = 2
 dimRange = 1
 
 # temperature
-tempLow = 145  # Kelvins
+tempLow = 50  # Kelvins
 deltaTemp = 5
 numOfTemps = 1
 # k = 1
@@ -59,11 +59,14 @@ for j in range(numOfTemps):
             # mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name)
             # plt.close()
             mySys.stepForward()
-        # print(mySys.totalMagnetization())
-        # print(sum(mySys.interactionEnergies))
-        # mySys.visualizeMagnetization(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_magnetization")
-        # plt.close()
-        # mySys.visualizeTotalEnergy(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_total_energy") 
-        # plt.close()
-        # mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name)
+        mySys.visualizeMagnetizationPhaseSpace(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_phasespace")
+        plt.close()
+        mySys.visualizeMagnetizationAutocovariance(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_autocovariance")
+        plt.close()
+        mySys.visualizeMagnetization(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_magnetization")
+        plt.close()
+        mySys.visualizeTotalEnergy(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_total_energy") 
+        plt.close()
+        mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name)
+        plt.close()
         print(datetime.now() - t)

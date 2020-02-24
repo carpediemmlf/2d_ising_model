@@ -6,6 +6,11 @@ from scipy.ndimage import convolve, generate_binary_structure
 import statsmodels.tsa.stattools
 import random
 import time
+
+from itertools import cycle
+from sklearn.cluster import Birch, MiniBatchKMeans, KMeans, SpectralClustering
+from sklearn import mixture
+# from sklearn.datasets import make_blobs
 # import matplotlib.pyplot as pyplot
 import copy
 
@@ -164,6 +169,66 @@ class Ising:
         plt.ylabel("Total energy / J")
         return fig
 
+    def visualizeMagnetizationAutocovariance(self, path="noPath.png", hyperplane=None):
+        # returns an auto-covariance plot
+        magnetizationAutocovariance = statsmodels.tsa.stattools.acovf(self.systemDataTimeSeries[1], demean=True, fft=True)
+        normalizedMagnetizationAutocovariance = magnetizationAutocovariance/magnetizationAutocovariance[0]
+        plt.close()
+        fig = plt.figure()
+        plt.plot(self.systemDataTimeSeries[0], normalizedMagnetizationAutocovariance, "+k")
+        plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
+        plt.xlabel("Time steps / a.u.")
+        plt.ylabel("Autocovariance of magnetization")
+        return fig
+
+    def visualizeMagnetizationPhaseSpace(self, path="noPath.png", hyperplane=None):
+        # plots the total magnetization with time
+        # currently default clustering by Birch
+        plt.close()
+        colors_ = cycle(mpl.colors.cnames.keys())
+        # colors_ = ["red", "blue"]
+        fig = plt.figure(figsize=(16,8))
+        # import and reshape data
+        magnetization = np.array(copy.deepcopy(self.systemDataTimeSeries[1]))
+        magnetization = magnetization / np.mean(np.absolute(magnetization))
+        magnetization = magnetization - np.mean(magnetization)
+        magnetization = np.reshape(magnetization, (magnetization.size, 1))
+
+        magnetizationGradient = np.gradient(self.systemDataTimeSeries[1])
+        magnetizationGradient = magnetizationGradient / np.mean(np.absolute(magnetizationGradient))
+        magnetizationGradient = magnetizationGradient - np.mean(magnetizationGradient)
+        magnetizationGradient = np.reshape(magnetizationGradient, (magnetizationGradient.size, 1))
+        
+        # original data
+        ax = fig.add_subplot(1, 2, 1)
+        ax.plot(magnetization, magnetizationGradient, "+k")
+        plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
+        plt.xlabel("Magnetization / Am^2")
+        plt.ylabel("d(Magnetization)/dt / (Am^2/a.u.)")
+ 
+        # clustering using scikit.learn
+        X = np.hstack((magnetization, magnetizationGradient))
+        # model = Birch(threshold=0.5, n_clusters=2)
+        # model = KMeans(n_clusters=2)
+        # model.fit(X)
+        model = mixture.GaussianMixture(n_components=2, covariance_type='full')
+        # model = SpectralClustering(assign_labels='discretize')
+        pred = model.fit_predict(X)
+        # plot
+        
+        # labels = model.labels_
+        # centroids = model.subcluster_centers_
+        # nClusters = np.unique(labels).size
+        # print("n clusters : %d" % nClusters)
+        ax = fig.add_subplot(1, 2, 2)
+        # for thisCentroid, k, col in zip(centroids, range(nClusters), colors_):
+        #     mask = labels == k
+        #     ax.scatter(X[mask, 0], X[mask, 1], c='w', edgecolor=col, marker='.', alpha=0.5)
+        ax.scatter(X[:, 0], X[:, 1], c=pred)
+        plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
+        plt.xlabel("Magnetization / Am^2")
+        plt.ylabel("d(Magnetization)/dt / (Am^2/a.u.)")
+        return fig
 
     def visualizeTwoDGrid(self, path="noPath.png", hyperplane=None):
         # safety measure: close all plots
@@ -186,11 +251,7 @@ class Ising:
 
         plt.colorbar(img, cmap=cmap, norm=norm, boundaries=bounds, ticks=[-1, 0, 1])
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
-        # plt.show()
-        # plt.savefig(path, dpi=1000)
         return fig
-        # plt.close()
-    
 
     # warning: do not run on its own
     # this is a helper function fo stepForward
@@ -224,7 +285,7 @@ class Ising:
         criteria = np.logical_and(self.zerothLattice, np.logical_or(temp1, temp2))
         self.system = np.where(criteria, -self.system, self.system)
         self.updateEnergies()
-        
+
         # first lattice
         boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
         evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
@@ -233,7 +294,7 @@ class Ising:
         criteria = np.logical_and(self.firstLattice, np.logical_or(temp1, temp2))
         self.system = np.where(criteria, -self.system, self.system)
         self.updateEnergies()
-        
+
         # second lattice
         boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
         evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
@@ -254,7 +315,6 @@ class Ising:
         # CRITICAL NOTICE: ALL STATE VARIABLES MUST BE UPDATED AFTER A self.system UPDATE
         """
 
-
         # record system data
         self.systemDataTimeSeries[0].append(self.timeStep)
         self.systemDataTimeSeries[1].append(self.totalMagnetization())
@@ -269,7 +329,7 @@ class Ising:
 # working now: investigate the hysteresis effect in a 2 d system
 # the hysteresis by cycling h
 # measure the remnant field
-# measure the external field needed for total negating of the field 
+# measure the external field needed for total negating of the field
 # measure the hysteresis loop energy
 
 def calcSys(name="newSys", N=100, H=0, T=150, t=50, stabalize=True, stabalize_length=10, D=2):
@@ -278,7 +338,7 @@ def calcSys(name="newSys", N=100, H=0, T=150, t=50, stabalize=True, stabalize_le
     # H:-> external field strength
     # T:-> temperature
     # t:-> number of steps
-    # stabalize:-> whether conduct initial evolution of about 10 steps to equilibriate
+    # stablize:-> whether conduct initial evolution of about 10 steps to equilibriate
     newSys = Ising(name, N, H, T, D)
 
     if stabalize:
@@ -304,6 +364,19 @@ def calcSys(name="newSys", N=100, H=0, T=150, t=50, stabalize=True, stabalize_le
     return newSys
 # ------------------------------------------------------------------------------------
 # returns the number of steps needed for a 1/e drop in autocovariance for a single run of a system
+
+
+def visualizeMagnetizationAutocovariance(self, path="noPath.png", hyperplane=None):
+    # returns an auto-covariance plot
+    magnetizationAutocovariance = statsmodels.tsa.stattools.acovf(self.systemDataTimeSeries[1], fft=True)
+    plt.close()
+    fig = plt.figure()
+    plt.plot(self.systemDataTimeSeries[0], magnetizationAutocovariance[:-1], "+k")
+    plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
+    plt.xlabel("Time steps / a.u.")
+    plt.ylabel("Autocovariance of magnetization")
+    return fig
+
 
 
 def singleLag(name="newAutocovMag", sys=None):
