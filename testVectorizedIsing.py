@@ -61,7 +61,7 @@ class Ising:
         self.timeStep = 0  # initialize timestep marker
         # figure sizes
         self.figureScale = 2
-        self.figureDpi = 100 # matplotlib defaults to dpi
+        self.figureDpi = 300 # matplotlib defaults to dpi=100
         # in inches
         self.figureHeight = 4.8
         self.figureWidth = 6.4
@@ -236,10 +236,10 @@ class Ising:
         modelLabels = Y_
         labels, counts = np.unique(modelLabels[modelLabels >= 0], return_counts=True)
         if np.absolute(counts[0] - counts[1]) / self.timeStep < 0.5:
-            print("alrealdy in equilibrium state")
+            print("Already in equilibrium state")
         else:
             self.equilibriumTime = np.amin(counts)
-
+            print("Time to equilibrium: " + str(self.equilibriumTime))
 
     def visualizeMagnetizationPhaseSpace(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with its time
@@ -256,9 +256,9 @@ class Ising:
         ax = fig.add_subplot(1, 2, 1)
         ax.plot(magnetization, magnetizationGradient, "+k")
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
-        plt.xlabel("Magnetization / Am^2")
-        plt.ylabel("d(Magnetization)/dt / (Am^2/a.u.)")
- 
+        plt.xlabel("demeaned and magnitude normalized Magnetization / a.u.")
+        plt.ylabel("d(demeaned and magnitude normalized Magnetization)/dt / a.u.")
+
         # clustering using scikit.learn
         X = np.hstack((magnetization, magnetizationGradient))
         # model = Birch(threshold=0.5, n_clusters=2)
@@ -268,8 +268,8 @@ class Ising:
         ax = fig.add_subplot(1, 2, 2)
         self.plotClustersEstimateEquilibriumTime(X, model, ax)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
-        plt.xlabel("Magnetization / Am^2")
-        plt.ylabel("d(Magnetization)/dt / (Am^2/a.u.)")
+        plt.xlabel("demeaned and magnitude normalized Magnetization / a.u.")
+        plt.ylabel("d(demeaned and magnitude normalized Magnetization)/dt / a.u.")
         return fig
 
     def visualizeTwoDGrid(self, path="noPath.png", hyperplane=None):
