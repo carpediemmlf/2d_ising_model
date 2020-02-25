@@ -1,5 +1,6 @@
 # common computing and statistical packages
 import numpy as np
+import numpy.linalg as linalg
 # from numpy.random import randint, uniform
 # import scipy as sp
 from scipy.ndimage import convolve, generate_binary_structure
@@ -63,6 +64,12 @@ class Ising:
         self.ground = np.full(np.repeat(self.n, self.d), 0)
         # storage of system physical property time series: time stamp, total magnetization, total energy,
         self.systemDataTimeSeries = [[], [], []]
+        # Time needed to reach steady state from initial state, initially set to zero
+        # will be updated if systems takes time t to move into equilibrium
+        # will remain zero if the system was initially in equilibrium
+        self.equilibriumTime = 0
+        # plotting colors
+        self.colors_ = cycle(mpl.colors.TABLEAU_COLORS.keys())
 
         # define the system with or without initial values
         spins = [1, -1]
@@ -152,8 +159,10 @@ class Ising:
     def visualizeMagnetization(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with time
         plt.close()
-        fig = plt.figure()
+        fig = plt.figure(figsize=(15, 12))
+        # fig = plt.figure()
         plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[1], "+k")
+        plt.axvline(x=self.equilibriumTime)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
         plt.xlabel("Time steps / a.u.")
         plt.ylabel("Total magnetization / Am^2")
@@ -162,41 +171,79 @@ class Ising:
     def visualizeTotalEnergy(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with time
         plt.close()
-        fig = plt.figure()
+        # fig = plt.figure()
+        fig = plt.figure(figsize=(15, 12))
         plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[2], "+k")
+        plt.axvline(x=self.equilibriumTime)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
         plt.xlabel("Time steps / a.u.")
         plt.ylabel("Total energy / J")
         return fig
 
     def visualizeMagnetizationAutocovariance(self, path="noPath.png", hyperplane=None):
+        plt.close()
+        fig = plt.figure(figsize=(15, 12))
         # returns an auto-covariance plot
         magnetizationAutocovariance = statsmodels.tsa.stattools.acovf(self.systemDataTimeSeries[1], demean=True, fft=True)
         normalizedMagnetizationAutocovariance = magnetizationAutocovariance/magnetizationAutocovariance[0]
-        plt.close()
-        fig = plt.figure()
+        # fig = plt.figure()
         plt.plot(self.systemDataTimeSeries[0], normalizedMagnetizationAutocovariance, "+k")
+        plt.axvline(x=self.equilibriumTime)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
         plt.xlabel("Time steps / a.u.")
         plt.ylabel("Autocovariance of magnetization")
         return fig
 
+    # data cleaning function that demean and normalize data using its absolute magnitude
+    def demeanNormalize(self, ndarray):
+        ndarray = copy.deepcopy(ndarray)
+        ndarray = ndarray / np.mean(np.absolute(ndarray))
+        ndarray = ndarray - np.mean(ndarray)
+        return ndarray
+
+    # helper cluster data plotter from scikit-learn, note plots at 1, 2, n sub graph for comparison with the original
+    def plotClustersEstimateEquilibriumTime(self, X, Y_, means, covariances, subplot):
+        for i, (mean, covar, color) in enumerate(zip(
+            means, covariances, self.colors_)):
+            v, w = linalg.eigh(covar)
+            v = 2. * np.sqrt(2.) * np.sqrt(v)
+            u = w[0] / linalg.norm(w[0])
+            # as the DP will not use every component it has access to
+            # unless it needs it, we shouldn't plot the redundant
+            # components.
+            if not np.any(Y_ == i):
+                continue
+            subplot.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
+
+            # Plot an ellipse to show the Gaussian component
+            angle = np.arctan(u[1] / u[0])
+            angle = 180. * angle / np.pi  # convert to degrees
+            ell = mpl.patches.Ellipse(mean, v[0], v[1], 180. + angle, color=color)
+            ell.set_clip_box(subplot.bbox)
+            ell.set_alpha(0.5)
+            subplot.add_artist(ell)
+
+        # identify number of steps to equilibrium, if any steps needed at all
+        modelLabels = Y_
+        labels, counts = np.unique(modelLabels[modelLabels >= 0], return_counts=True)
+        if np.absolute(counts[0] - counts[1]) / self.timeStep < 0.5:
+            print("alrealdy in equilibrium state")
+        else:
+            self.equilibriumTime = np.amin(counts)
+
+
     def visualizeMagnetizationPhaseSpace(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with time
         # currently default clustering by Birch
         plt.close()
-        colors_ = cycle(mpl.colors.cnames.keys())
+        # colors_ = self.colors_
         # colors_ = ["red", "blue"]
-        fig = plt.figure(figsize=(16,8))
+        fig = plt.figure(figsize=(20,12))
         # import and reshape data
-        magnetization = np.array(copy.deepcopy(self.systemDataTimeSeries[1]))
-        magnetization = magnetization / np.mean(np.absolute(magnetization))
-        magnetization = magnetization - np.mean(magnetization)
+        magnetization = self.demeanNormalize(self.systemDataTimeSeries[1])
         magnetization = np.reshape(magnetization, (magnetization.size, 1))
 
-        magnetizationGradient = np.gradient(self.systemDataTimeSeries[1])
-        magnetizationGradient = magnetizationGradient / np.mean(np.absolute(magnetizationGradient))
-        magnetizationGradient = magnetizationGradient - np.mean(magnetizationGradient)
+        magnetizationGradient = self.demeanNormalize(np.gradient(self.systemDataTimeSeries[1]))
         magnetizationGradient = np.reshape(magnetizationGradient, (magnetizationGradient.size, 1))
         
         # original data
@@ -210,10 +257,10 @@ class Ising:
         X = np.hstack((magnetization, magnetizationGradient))
         # model = Birch(threshold=0.5, n_clusters=2)
         # model = KMeans(n_clusters=2)
-        # model.fit(X)
         model = mixture.GaussianMixture(n_components=2, covariance_type='full')
+        model.fit(X)
         # model = SpectralClustering(assign_labels='discretize')
-        pred = model.fit_predict(X)
+        # pred = model.fit_predict(X)
         # plot
         
         # labels = model.labels_
@@ -221,10 +268,11 @@ class Ising:
         # nClusters = np.unique(labels).size
         # print("n clusters : %d" % nClusters)
         ax = fig.add_subplot(1, 2, 2)
-        # for thisCentroid, k, col in zip(centroids, range(nClusters), colors_):
+        # for thisCentroid, k, col in zip(centroids, range(nClusters), self.colors_):
         #     mask = labels == k
         #     ax.scatter(X[mask, 0], X[mask, 1], c='w', edgecolor=col, marker='.', alpha=0.5)
-        ax.scatter(X[:, 0], X[:, 1], c=pred)
+        # ax.scatter(X[:, 0], X[:, 1], c=pred)
+        self.plotClustersEstimateEquilibriumTime(X, model.predict(X), model.means_, model.covariances_, ax)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
         plt.xlabel("Magnetization / Am^2")
         plt.ylabel("d(Magnetization)/dt / (Am^2/a.u.)")
@@ -274,46 +322,6 @@ class Ising:
         # print(self.sublattices[0])
         for sublattice in self.sublattices:
             self.updateSublattice(sublattice)
-
-        # keep the following for record
-        """
-        # zeroth lattice
-        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
-        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        criteria = np.logical_and(self.zerothLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
-        self.updateEnergies()
-
-        # first lattice
-        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
-        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        criteria = np.logical_and(self.firstLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
-        self.updateEnergies()
-
-        # second lattice
-        boltzmanFactor = np.exp(2 * self.interactionEnergies / (self.k * self.t))
-        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        criteria = np.logical_and(self.secondLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
-        self.updateEnergies()
-
-        # third lattice
-        boltzmanFactor = np.exp(2 * self.interactionEnergies/(self.k * self.t))
-        evenDist = np.random.uniform(0, 1, size=np.repeat(self.n, self.d))
-        temp1 = np.greater(self.interactionEnergies, self.ground)
-        temp2 = np.greater(boltzmanFactor, evenDist)
-        criteria = np.logical_and(self.thirdLattice, np.logical_or(temp1, temp2))
-        self.system = np.where(criteria, -self.system, self.system)
-        self.updateEnergies()
-        # CRITICAL NOTICE: ALL STATE VARIABLES MUST BE UPDATED AFTER A self.system UPDATE
-        """
 
         # record system data
         self.systemDataTimeSeries[0].append(self.timeStep)

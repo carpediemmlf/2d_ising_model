@@ -5,15 +5,15 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 101
-steps = 18000
+size = 41
+steps = 5000
 
 # starting dimension, range of dimensions
 dimLow = 2
 dimRange = 1
 
 # temperature
-tempLow = 50  # Kelvins
+tempLow = 150  # Kelvins
 deltaTemp = 5
 numOfTemps = 1
 # k = 1
@@ -59,6 +59,7 @@ for j in range(numOfTemps):
             # mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name)
             # plt.close()
             mySys.stepForward()
+        # warning: use phasespace to estimate equilibriate time needed before plotting other plots
         mySys.visualizeMagnetizationPhaseSpace(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_phasespace")
         plt.close()
         mySys.visualizeMagnetizationAutocovariance(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_autocovariance")
