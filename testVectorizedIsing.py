@@ -61,6 +61,7 @@ class Ising:
         self.timeStep = 0  # initialize timestep marker
         # figure sizes
         self.figureScale = 2
+        self.figureDpi = 100 # matplotlib defaults to dpi
         # in inches
         self.figureHeight = 4.8
         self.figureWidth = 6.4
@@ -164,7 +165,7 @@ class Ising:
     def visualizeMagnetization(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with time
         plt.close()
-        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale), dpi=self.figureDpi)
         # fig = plt.figure()
         plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[1], "+k")
         plt.axvline(x=self.equilibriumTime)
@@ -177,7 +178,7 @@ class Ising:
         # plots the total magnetization with time
         plt.close()
         # fig = plt.figure()
-        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale), dpi=self.figureDpi)
         plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[2], "+k")
         plt.axvline(x=self.equilibriumTime)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
@@ -187,7 +188,7 @@ class Ising:
 
     def visualizeMagnetizationAutocovariance(self, path="noPath.png", hyperplane=None):
         plt.close()
-        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale), dpi=self.figureDpi)
         # returns an auto-covariance plot
         magnetizationAutocovariance = statsmodels.tsa.stattools.acovf(self.systemDataTimeSeries[1], demean=True, fft=True)
         normalizedMagnetizationAutocovariance = magnetizationAutocovariance/magnetizationAutocovariance[0]
@@ -243,7 +244,7 @@ class Ising:
     def visualizeMagnetizationPhaseSpace(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with its time
         plt.close()
-        fig = plt.figure(figsize=(self.figureWidth * self.figureScale * 2, self.figureHeight * self.figureScale))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale * 2, self.figureHeight * self.figureScale), dpi=self.figureDpi)
         # import and reshape data
         # scikit-learn only takes columns of attributes
         magnetization = self.demeanNormalize(self.systemDataTimeSeries[1])

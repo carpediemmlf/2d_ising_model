@@ -16,6 +16,7 @@ dimRange = 1
 tempLow = 150  # Kelvins
 deltaTemp = 5
 numOfTemps = 1
+# figure saving type
 # k = 1
 # j = 1
 for j in range(numOfTemps):
@@ -60,14 +61,14 @@ for j in range(numOfTemps):
             # plt.close()
             mySys.stepForward()
         # warning: use phasespace to estimate equilibriate time needed before plotting other plots
-        mySys.visualizeMagnetizationPhaseSpace(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_phasespace")
+        mySys.visualizeMagnetizationPhaseSpace(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_phasespace.svg")
         plt.close()
-        mySys.visualizeMagnetizationAutocovariance(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_autocovariance")
+        mySys.visualizeMagnetizationAutocovariance(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_autocovariance.svg")
         plt.close()
-        mySys.visualizeMagnetization(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_magnetization")
+        mySys.visualizeMagnetization(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_magnetization.svg")
         plt.close()
-        mySys.visualizeTotalEnergy(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_total_energy") 
+        mySys.visualizeTotalEnergy(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_total_energy.svg") 
         plt.close()
-        mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name)
+        mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name + ".svg")
         plt.close()
         print(datetime.now() - t)
