@@ -59,6 +59,11 @@ class Ising:
         self.d = D  # system dimension
         self.tc = 2*J/(K*np.arcsinh(1))  # theoretical tc for 2d by onsanger
         self.timeStep = 0  # initialize timestep marker
+        # figure sizes
+        self.figureScale = 2
+        # in inches
+        self.figureHeight = 4.8
+        self.figureWidth = 6.4
         # working
         self.kernel = generate_binary_structure(self.d, 1)
         self.ground = np.full(np.repeat(self.n, self.d), 0)
@@ -159,7 +164,7 @@ class Ising:
     def visualizeMagnetization(self, path="noPath.png", hyperplane=None):
         # plots the total magnetization with time
         plt.close()
-        fig = plt.figure(figsize=(15, 12))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
         # fig = plt.figure()
         plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[1], "+k")
         plt.axvline(x=self.equilibriumTime)
@@ -172,7 +177,7 @@ class Ising:
         # plots the total magnetization with time
         plt.close()
         # fig = plt.figure()
-        fig = plt.figure(figsize=(15, 12))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
         plt.plot(self.systemDataTimeSeries[0], self.systemDataTimeSeries[2], "+k")
         plt.axvline(x=self.equilibriumTime)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
@@ -182,7 +187,7 @@ class Ising:
 
     def visualizeMagnetizationAutocovariance(self, path="noPath.png", hyperplane=None):
         plt.close()
-        fig = plt.figure(figsize=(15, 12))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
         # returns an auto-covariance plot
         magnetizationAutocovariance = statsmodels.tsa.stattools.acovf(self.systemDataTimeSeries[1], demean=True, fft=True)
         normalizedMagnetizationAutocovariance = magnetizationAutocovariance/magnetizationAutocovariance[0]
@@ -202,7 +207,10 @@ class Ising:
         return ndarray
 
     # helper cluster data plotter from scikit-learn, note plots at 1, 2, n sub graph for comparison with the original
-    def plotClustersEstimateEquilibriumTime(self, X, Y_, means, covariances, subplot):
+    def plotClustersEstimateEquilibriumTime(self, X, model, subplot):
+        Y_ = model.predict(X)
+        covariances = model.covariances_
+        means = model.means_
         for i, (mean, covar, color) in enumerate(zip(
             means, covariances, self.colors_)):
             v, w = linalg.eigh(covar)
@@ -233,19 +241,16 @@ class Ising:
 
 
     def visualizeMagnetizationPhaseSpace(self, path="noPath.png", hyperplane=None):
-        # plots the total magnetization with time
-        # currently default clustering by Birch
+        # plots the total magnetization with its time
         plt.close()
-        # colors_ = self.colors_
-        # colors_ = ["red", "blue"]
-        fig = plt.figure(figsize=(20,12))
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale * 2, self.figureHeight * self.figureScale))
         # import and reshape data
+        # scikit-learn only takes columns of attributes
         magnetization = self.demeanNormalize(self.systemDataTimeSeries[1])
         magnetization = np.reshape(magnetization, (magnetization.size, 1))
-
         magnetizationGradient = self.demeanNormalize(np.gradient(self.systemDataTimeSeries[1]))
         magnetizationGradient = np.reshape(magnetizationGradient, (magnetizationGradient.size, 1))
-        
+
         # original data
         ax = fig.add_subplot(1, 2, 1)
         ax.plot(magnetization, magnetizationGradient, "+k")
@@ -259,20 +264,8 @@ class Ising:
         # model = KMeans(n_clusters=2)
         model = mixture.GaussianMixture(n_components=2, covariance_type='full')
         model.fit(X)
-        # model = SpectralClustering(assign_labels='discretize')
-        # pred = model.fit_predict(X)
-        # plot
-        
-        # labels = model.labels_
-        # centroids = model.subcluster_centers_
-        # nClusters = np.unique(labels).size
-        # print("n clusters : %d" % nClusters)
         ax = fig.add_subplot(1, 2, 2)
-        # for thisCentroid, k, col in zip(centroids, range(nClusters), self.colors_):
-        #     mask = labels == k
-        #     ax.scatter(X[mask, 0], X[mask, 1], c='w', edgecolor=col, marker='.', alpha=0.5)
-        # ax.scatter(X[:, 0], X[:, 1], c=pred)
-        self.plotClustersEstimateEquilibriumTime(X, model.predict(X), model.means_, model.covariances_, ax)
+        self.plotClustersEstimateEquilibriumTime(X, model, ax)
         plt.title("\n".join(wrap("Ising Model, Dimension = "+str(self.d)+", N = "+str(self.n)+", Tc = "+str(sigfig.round(float(self.tc), sigfigs=4))+"K, T = "+str(sigfig.round(float(self.t), sigfigs=4)) + "K, Time = "+str(self.timeStep)+"au", 60)))
         plt.xlabel("Magnetization / Am^2")
         plt.ylabel("d(Magnetization)/dt / (Am^2/a.u.)")
@@ -293,7 +286,7 @@ class Ising:
             data = data[:, :, 0]
         # plot
         fig, axes = plt.subplots()
-        fig = plt.figure()
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale))
         axes = fig.add_subplot(111)
         img = axes.imshow(data, interpolation='nearest', cmap=cmap, norm=norm, animated=True)
 
