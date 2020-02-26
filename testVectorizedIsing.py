@@ -93,34 +93,35 @@ class Ising:
         secondSites = choices[2::4]
         thirdSites = choices[3::4]
 
+        # dimension index
         self.dimensions = range(self.d)
-        
+
         self.zerothLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
         for choice in zerothSites:
             self.zerothLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
-        
+
         # self.dimensions = range(self.d)
         self.firstLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
         for choice in firstSites:
             self.firstLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
-        
+
         # self.dimensions = range(self.d)
         self.secondLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
         for choice in secondSites:
             self.secondLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
-        
+
         # self.dimensions = range(self.d)
         self.thirdLattice = np.full(tuple(np.repeat(self.n, self.d)), False)
         for choice in thirdSites:
             self.thirdLattice[tuple([int(np.floor(choice % self.n**(x+1) / self.n**x)) for x in self.dimensions])] = True
-       
+
         # in each step randomly update all sublattices
         self.sublattices = np.array([self.zerothLattice, self.firstLattice, self.secondLattice, self.thirdLattice])
 
         # self.evenLattice = np.invert(copy.deepcopy(self.oddLattice))
         # iniitalize initial energies using initial state
         self.updateEnergies()
-        
+
         # save initial system data at time stamp=0
         self.systemDataTimeSeries[0].append(self.timeStep)
         self.systemDataTimeSeries[1].append(self.totalMagnetization())
