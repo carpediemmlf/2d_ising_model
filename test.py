@@ -5,8 +5,8 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 11
-steps = 500
+size = 41
+steps = 3000
 
 # starting dimension, range of dimensions
 dimLow = 2
@@ -15,17 +15,18 @@ dimRange = 1
 # output figure type
 figureType = "png"
 # temperature
-tempLow = 15  # Kelvins
+tempLow = 300 # Kelvins
 deltaTemp = 40
 numOfTemps = 1
 # k = 1
 # j = 1
+"""
 for j in range(numOfTemps):
     for i in range(dimRange):
         dim = i + dimLow
         temp = tempLow + j * deltaTemp
         mySys = Ising(name="testingNDIsing", N=size, D=dim, T=temp) #H=np.power(1.0, -15))#, K=k, J=j)
-        inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, T=temp, numberOfMeasurements=15)
+        # inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, T=temp, numberOfMeasurements=15)
         # print spec
         print("N = " + str(size) + ", D = " + str(dim))
         t = (datetime.now())
@@ -57,8 +58,24 @@ for j in range(numOfTemps):
         plt.close()
         mySys.visualizeTotalEnergy(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_total_energy." + figureType)
         plt.close()
-        inquireMySys.visualizeEquilibriumTimes().savefig(path + "/" + str(l) + "_" + name + "_equilibrium_times." + figureType)
-        plt.close()
         mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name + "." + figureType)
         plt.close()
         print(datetime.now() - t)
+
+"""
+for i in range(dimRange):
+    dim = dimLow +i
+    name = "visualization_d=" + str(dim) + "_n=" + str(size)
+    path = os.getcwd() + "/" + name
+    try:
+        os.mkdir(path)
+    except OSError:
+        print("Creation of the directory %s failed" % path)
+    else:
+        print("Successfully created the directory %s " % path) 
+    t = (datetime.now())
+    inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=10, dataPoints=25, lowerTemperature=180, deltaTemperature=2, steps=1000)
+    # inquireMySys.visualizeStationaryMagnetization().savefig(path + "/" + name + "_stationary_magnetizations." + figureType)
+    inquireMySys.visualizeCorrelationTime().savefig(path + "/" + name + "_correlation_times." + figureType)
+    plt.close()
+    print(datetime.now() - t)
