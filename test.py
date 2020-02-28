@@ -5,8 +5,8 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 31
-steps = 5000
+size = 11
+steps = 500
 
 # starting dimension, range of dimensions
 dimLow = 2
@@ -15,9 +15,9 @@ dimRange = 1
 # output figure type
 figureType = "png"
 # temperature
-tempLow = 5  # Kelvins
+tempLow = 15  # Kelvins
 deltaTemp = 40
-numOfTemps = 7
+numOfTemps = 1
 # k = 1
 # j = 1
 for j in range(numOfTemps):
@@ -25,6 +25,7 @@ for j in range(numOfTemps):
         dim = i + dimLow
         temp = tempLow + j * deltaTemp
         mySys = Ising(name="testingNDIsing", N=size, D=dim, T=temp) #H=np.power(1.0, -15))#, K=k, J=j)
+        inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, T=temp, numberOfMeasurements=15)
         # print spec
         print("N = " + str(size) + ", D = " + str(dim))
         t = (datetime.now())
@@ -55,6 +56,8 @@ for j in range(numOfTemps):
         mySys.visualizeMagnetization(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_magnetization." + figureType)
         plt.close()
         mySys.visualizeTotalEnergy(name, hyperplane).savefig(path + "/" + str(l) + "_" + name + "_total_energy." + figureType)
+        plt.close()
+        inquireMySys.visualizeEquilibriumTimes().savefig(path + "/" + str(l) + "_" + name + "_equilibrium_times." + figureType)
         plt.close()
         mySys.visualizeTwoDGrid(hyperplane=hyperplane).savefig(path + "/" + str(l) + "_" + name + "." + figureType)
         plt.close()
