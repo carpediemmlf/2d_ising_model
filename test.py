@@ -68,10 +68,11 @@ size = 11
 for i in range(dimRange):
     dim = dimLow +i
     name = "visualization_d=" + str(dim) + "_n=" + str(size)
-    lowerTemperature = 210
+    lowerTemperature = 211
     dataPoints = 10
-    deltaTemperature = 1
+    deltaTemperature = 0.1
     steps = 100000
+    numberOfMeasurements = 3
     path = os.getcwd() + "/" + name
     try:
         os.mkdir(path)
@@ -80,7 +81,7 @@ for i in range(dimRange):
     else:
         print("Successfully created the directory %s " % path)
     t = (datetime.now())
-    inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=3, dataPoints=dataPoints, lowerTemperature=lowerTemperature, deltaTemperature=deltaTemperature, steps=steps)
+    inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=numberOfMeasurements, dataPoints=dataPoints, lowerTemperature=lowerTemperature, deltaTemperature=deltaTemperature, steps=steps)
     name = name + "_lowerTemperature=" + str(lowerTemperature) + "_deltaTemperature=" + str(deltaTemperature) + "_dataPoints=" + str(dataPoints)
     # inquireMySys.visualizeStationaryMagnetization().savefig(path + "/" + name + "_stationary_magnetizations." + figureType)
     inquireMySys.visualizeCorrelationTime().savefig(path + "/" + name + "_correlation_times." + figureType)
