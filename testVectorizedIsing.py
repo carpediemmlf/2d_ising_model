@@ -76,7 +76,7 @@ class Ising:
         self.normalizedMagnetizationAutocovariance = None
         # Time needed to reach steady state from initial state, initially set to zero
         # will be updated if systems takes time t to move into equilibrium
-        
+
         # mean magnetization and its error from a single measurement, returned as a 2 element list
         self.meanMagnetizationWithEror = []
 
@@ -94,7 +94,8 @@ class Ising:
             self.system = np.random.choice(spins, tuple(np.repeat(self.n, self.d)))
         else:
             # dangerously, for future importing of existing system
-            self.system = np.empty(tuple(np.repeat(self.n, self.d)))
+            # currently randomly chooses all up or all down
+            self.system = np.full(tuple(np.repeat(self.n, self.d)), np.choose(1, [1, -1]))
         self.system = np.asarray(self.system)
         choices = list(range(self.n**self.d))
 
@@ -164,7 +165,7 @@ class Ising:
         self.interactionEnergies = \
                 (-self.j) * (convolve(self.system, self.kernel, mode='wrap') - self.system) * self.system + \
                 self.m * self.h * self.system
-    
+
     # currently deprecated
     def flip(self, coords):
         energy = self.localEnergy(coords)
@@ -247,21 +248,25 @@ class Ising:
     def estimateCorrelationTime(self):
         cropLength = 0
         cropFinished = False
+        # case where correlation time is not estimated
+        # if self.equilibriumTime == 0:
+        #     return False
         for i in range(self.timeStep - int(self.equilibriumTime * 2)):
             if cropFinished:
                 break
-            if self.normalizedMagnetizationAutocovariance[i] <= np.exp(-1.0):
+            if self.normalizedMagnetizationAutocovariance[i] <= np.exp(-2.0):
                 cropLength = i
                 cropFinished = True
         croppedAutocovariance = copy.deepcopy(self.normalizedMagnetizationAutocovariance[:cropLength])
         time = np.arange(cropLength)
 
-        print(croppedAutocovariance)
+        # print(croppedAutocovariance)
         logCroppedAutocovariance = np.log(croppedAutocovariance)
         # logTime = np.log(time)
         b, m = np.polyfit(time, logCroppedAutocovariance, 1)
         self.correlationTime = np.absolute(1 / m)
-
+        # successfully estimated correlation time
+        return True
     # data cleaning function that demean and normalize data using its absolute magnitude
     def demeanNormalize(self, ndarray):
         ndarray = copy.deepcopy(ndarray)
@@ -488,11 +493,11 @@ class InquireIsing:
             temperature = lowerTemperature + a * deltaTemperature
             data[0].append(temperature)
             # self.blockSizeAndVarianceInMeanMagnetization[0].append(blockSize)
-            tempSys = Ising(name=self.name, N=self.n, H=self.h, T=temperature, D=self.d, J=self.j, randomFill=self.randomFill, K=self.k, M=self.m, equilibriumTime=self.equilibriumTime, numberOfMeasurements=self.numberOfMeasurements)
+            tempSys = Ising(name=self.name, N=self.n, H=self.h, T=temperature, D=self.d, J=self.j, randomFill=self.randomFill, K=self.k, M=self.m, equilibriumTime=self.equilibriumTime, correlationTime=20, numberOfMeasurements=self.numberOfMeasurements)
             for step in range(self.steps):
                 tempSys.stepForward()
             tempSys.visualizeMagnetizationPhaseSpace()
-            tempSys.correlationTime() 
+            # tempSys.estimateCorrelationTime()
             [meanMag, error] = tempSys.meanStationaryMagnetization()
             data[1].append(meanMag)
             data[2].append(error)
@@ -523,8 +528,8 @@ class InquireIsing:
             data[0].append(temperature)
             # self.blockSizeAndVarianceInMeanMagnetization[0].append(blockSize)
             correlationTimes = []
-            for j in range(numberOfMeasurements):
-                
+            j = 0
+            while j < numberOfMeasurements:
                 tempSys = Ising(name=self.name, N=self.n, H=self.h, T=temperature, D=self.d, J=self.j, randomFill=self.randomFill, K=self.k, M=self.m, equilibriumTime=self.equilibriumTime, numberOfMeasurements=self.numberOfMeasurements)
                 for step in range(self.steps):
                     tempSys.stepForward()
@@ -534,6 +539,7 @@ class InquireIsing:
                 tempSys.visualizeMagnetizationAutocovariance()
                 # estimate correlation time
                 tempSys.estimateCorrelationTime()
+                j = j + 1
                 correlationTimes.append(tempSys.correlationTime)
             data[1].append(np.mean(correlationTimes))
             data[2].append(np.sqrt(np.var(correlationTimes)))

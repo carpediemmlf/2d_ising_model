@@ -5,7 +5,7 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 41
+size = 31
 steps = 3000
 
 # starting dimension, range of dimensions
@@ -63,18 +63,25 @@ for j in range(numOfTemps):
         print(datetime.now() - t)
 
 """
+dimLow = 2
+size = 11
 for i in range(dimRange):
     dim = dimLow +i
     name = "visualization_d=" + str(dim) + "_n=" + str(size)
+    lowerTemperature = 210
+    dataPoints = 10
+    deltaTemperature = 1
+    steps = 100000
     path = os.getcwd() + "/" + name
     try:
         os.mkdir(path)
     except OSError:
         print("Creation of the directory %s failed" % path)
     else:
-        print("Successfully created the directory %s " % path) 
+        print("Successfully created the directory %s " % path)
     t = (datetime.now())
-    inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=10, dataPoints=25, lowerTemperature=180, deltaTemperature=2, steps=1000)
+    inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=3, dataPoints=dataPoints, lowerTemperature=lowerTemperature, deltaTemperature=deltaTemperature, steps=steps)
+    name = name + "_lowerTemperature=" + str(lowerTemperature) + "_deltaTemperature=" + str(deltaTemperature) + "_dataPoints=" + str(dataPoints)
     # inquireMySys.visualizeStationaryMagnetization().savefig(path + "/" + name + "_stationary_magnetizations." + figureType)
     inquireMySys.visualizeCorrelationTime().savefig(path + "/" + name + "_correlation_times." + figureType)
     plt.close()
