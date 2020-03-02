@@ -21,3 +21,7 @@
   + sigfig
   + textwrap3
   + matplotlib
+
+## API Documentation
+ 
+- will be added using pdoc.
