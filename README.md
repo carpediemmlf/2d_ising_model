@@ -9,5 +9,15 @@
 
 ## Installation
 
-- All packages can be installed using the pip3 install command.
-
+- All packages can be installed using the pip3 install command. Packages needed are listed below.
+  + numpy
+  + scipy
+  + scikit-learn
+  + random
+  + statsmodels
+  + time
+  + itertools
+  + os
+  + sigfig
+  + textwrap3
+  + matplotlib
