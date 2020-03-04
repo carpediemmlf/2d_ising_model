@@ -5,8 +5,8 @@ from datetime import *
 # from matplotlib import animation
 
 # note: current parallelism only allows odd system sizes
-size = 31
-steps = 3000
+size = 51
+steps = 30000
 
 # starting dimension, range of dimensions
 dimLow = 2
@@ -15,7 +15,7 @@ dimRange = 1
 # output figure type
 figureType = "png"
 # temperature
-tempLow = 300 # Kelvins
+tempLow = 206 # Kelvins
 deltaTemp = 40
 numOfTemps = 1
 # k = 1
@@ -65,13 +65,14 @@ for j in range(numOfTemps):
 """
 dimLow = 2
 size = 11
+dimRange = 1
 for i in range(dimRange):
     dim = dimLow +i
     name = "visualization_d=" + str(dim) + "_n=" + str(size)
-    lowerTemperature = 211
+    lowerTemperature = 20
     dataPoints = 10
     deltaTemperature = 0.1
-    steps = 100000
+    steps = 10000
     numberOfMeasurements = 3
     path = os.getcwd() + "/" + name
     try:
@@ -82,8 +83,14 @@ for i in range(dimRange):
         print("Successfully created the directory %s " % path)
     t = (datetime.now())
     inquireMySys = InquireIsing(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=numberOfMeasurements, dataPoints=dataPoints, lowerTemperature=lowerTemperature, deltaTemperature=deltaTemperature, steps=steps)
+    # mySys = Ising(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=numberOfMeasurements)
+    # for i in range(1000):
+    #     mySys.stepForward()
     name = name + "_lowerTemperature=" + str(lowerTemperature) + "_deltaTemperature=" + str(deltaTemperature) + "_dataPoints=" + str(dataPoints)
+
+    # inquire about properties
+    inquireMySys.visualizeBinderCumulant().savefig(path + "/" + name + "_binder_cumulants." + figureType)
     # inquireMySys.visualizeStationaryMagnetization().savefig(path + "/" + name + "_stationary_magnetizations." + figureType)
-    inquireMySys.visualizeCorrelationTime().savefig(path + "/" + name + "_correlation_times." + figureType)
+    # inquireMySys.visualizeCorrelationTime().savefig(path + "/" + name + "_correlation_times." + figureType)
     plt.close()
     print(datetime.now() - t)

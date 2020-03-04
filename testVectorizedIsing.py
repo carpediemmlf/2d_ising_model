@@ -15,6 +15,54 @@ from sklearn import mixture
 # import matplotlib.pyplot as pyplot
 import copy
 
+from numba import jit, jitclass
+from numba import int64, float64, boolean, uint8
+
+spec = [
+    ('removeUnderflow', float64),
+    ('j', float64),
+    ('h', float64),
+    ('t', float64),
+    ('n', int64),
+    ('m', float64),
+    ('k', float64),
+    ('d', int64),
+    ('tc', float64),
+    ('timeStep', int64),
+    ('figureScale', float64),
+    ('figureDpi', float64),
+    ('figureHeight', float64),
+    ('figureWidth', float64),
+    ('kernel', int64[:]),
+    ('ground', float64[:]),
+    ('systemDataTimeSeries', float64[:]),
+    ('correlationTimeEstimates', float64[:]),
+    ('normalizedMagnetizationAutocovariance', float64[:]),
+    ('meanMagnetizationWithError', float64[:]),
+    ('equilibriumTime', float64),
+    ('correlationTime', float64),
+    ('system', int64),
+    ('dimensions', int64[:]),
+    ('zerothLattice', float64[:]),
+    ('firstLattice', float64[:]),
+    ('secondLattice', float64[:]),
+    ('thirdLattice', float64[:]),
+    ('randomFill', boolean),
+    ('steps', int64),
+    ('numberOfMeasurements', int64),
+    ('dataPoints', int64),
+
+    # ('array', float64[:]),
+    ('lowerTemperature', float64),
+    ('deltaTemperature', float64),
+    ('deltaBlockSize', int64),
+    ('name', uint8[:]),
+    ('blockSizeAndVarianceInMeanMagnetization', float64[:]),
+    ('meanStationaryMagnetizationAgainstTemperature', float64[:]),
+    ('equilibriumTimeAgainstTemperature', float64[:]),
+    ('correlationTimeAgainstTemperature', float64[:]),
+    ]
+
 # a powerful plotter package for jupyter-notebook
 # import bokeh
 # from bokeh.plotting import figure, output_file, show, save
@@ -45,17 +93,17 @@ from matplotlib import pyplot as plt
 
 # SI Units ommited
 
-
+# @jitclass(spec)
 class Ising:
     # iron from https://www.southampton.ac.uk/~rpb/thesis/node18.html
     def __init__(self, name="none", N=100, H=0, T=273.15, D=2, J=1.21 * np.power(10.0, -21), randomFill=True, K=1.38064852 * np.power(10.0, -23), M=2.22 * np.power(10.0, (-23)), correlationTime=2, equilibriumTime=200, numberOfMeasurements=15):
         self.removeUnderflow = np.power(10, 0)
-        self.j = np.longdouble(J)  # / self.removeUnderflow  # 'numerical' coupling constant
-        self.h = np.longdouble(H)  # external field strength
+        self.j = J  # / self.removeUnderflow  # 'numerical' coupling constant
+        self.h = H  # external field strength
         self.n = N  # lattice size
-        self.m = np.longdouble(M)  # single spin magnetic moment
-        self.k = np.longdouble(K)  # boltzman constant
-        self.t = np.longdouble(T)  # / self.removeUnderflow # temperature in kelvins
+        self.m = M  # single spin magnetic moment
+        self.k = K  # boltzman constant
+        self.t = T  # / self.removeUnderflow # temperature in kelvins
         self.d = D  # system dimension
         self.tc = 2*J/(K*np.arcsinh(1))  # theoretical tc for 2d by onsanger
         self.timeStep = 0  # initialize timestep marker
@@ -72,13 +120,14 @@ class Ising:
         self.systemDataTimeSeries = [[], [], []]
         # storage of blocksize, measured magnetization, variance of measured magnetization, variance in that variance
         self.correlationTimeEstimates = [[], [], []]
+        self.binderCumulant = None
         # normalized magnetization auto-covariance
         self.normalizedMagnetizationAutocovariance = None
         # Time needed to reach steady state from initial state, initially set to zero
         # will be updated if systems takes time t to move into equilibrium
 
         # mean magnetization and its error from a single measurement, returned as a 2 element list
-        self.meanMagnetizationWithEror = []
+        self.meanMagnetizationWithError = []
 
         self.equilibriumTime = equilibriumTime
         self.numberOfMeasurements = numberOfMeasurements
@@ -142,8 +191,22 @@ class Ising:
         # care: coordination number normalization when accounting for total energy
         self.systemDataTimeSeries[2].append(np.sum(self.interactionEnergies) / 2)
 
+        self.stationaryMagnetization = None
+
     def totalMagnetization(self):
         return self.m * np.sum(self.system)
+
+    # Warning: estimate the equilibrium time before calculating binderCumulent
+    def estimateBinderCumulant(self):
+        data = copy.deepcopy(self.systemDataTimeSeries)
+        # crop transients
+        if not self.equilibriumTime == 0:
+            data[0] = data[0][slice(int(self.equilibriumTime * 2), self.timeStep)]
+            data[1] = data[1][slice(int(self.equilibriumTime * 2), self.timeStep)]
+            data[2] = data[2][slice(int(self.equilibriumTime * 2), self.timeStep)]
+        meanToTheFourth = np.mean(np.power(data[1], 4.0))
+        meanToTheSecond = np.mean(np.power(data[1], 2.0))
+        self.binderCumulant = 1 - meanToTheFourth / (3 * meanToTheSecond ** 2)
 
     def localEnergy(self, coords):  # periodic bc
         # coords a list contain d integer indices to specify the ising lattice in d dimensional space
@@ -219,7 +282,9 @@ class Ising:
                 averages = np.append(averages, [np.mean(steadyStateDataTimeSeries[slice(i * blockSize, (i + 1) * blockSize)])])
             else:
                 break
-        return [np.mean(averages), np.sqrt(np.var(averages))]
+
+        self.stationaryMagnetization = [np.mean(averages), np.sqrt(np.var(averages) / (sself.numberOfMeasurements - 1))]
+        return self.stationaryMagnetization
 
     def visualizeMagnetizationAutocovariance(self, path="noPath.png", hyperplane=None):
         plt.close()
@@ -281,6 +346,8 @@ class Ising:
         means = model.means_
         for i, (mean, covar, color) in enumerate(zip(
             means, covariances, self.colors_)):
+        # for i, (mean, covar) in enumerate(zip(
+        #     means, covariances)):
             v, w = linalg.eigh(covar)
             v = 2. * np.sqrt(2.) * np.sqrt(v)
             u = w[0] / linalg.norm(w[0])
@@ -402,15 +469,16 @@ class Ising:
 # measure the hysteresis loop energy, notice need to add impurities if you want a considerable amount of area enclosed
 
 # measurement class to allow taking measurements across multiple systems
+# @jitclass(spec)
 class InquireIsing:
     def __init__(self, name="none", N=100, H=0, T=273.15, D=2, J=1.21 * np.power(10.0, -21), randomFill=True, K=1.38064852 * np.power(10.0, -23), M=2.22 * np.power(10.0, (-23)), correlationTime=20, equilibriumTime=0, steps=1500, numberOfMeasurements=15, dataPoints=10, lowerTemperature=20, deltaTemperature = 20):
         self.removeUnderflow = np.power(10, 0)
-        self.j = np.longdouble(J)  # / self.removeUnderflow  # 'numerical' coupling constant
-        self.h = np.longdouble(H)  # external field strength
+        self.j = J  # / self.removeUnderflow  # 'numerical' coupling constant
+        self.h = H  # external field strength
         self.n = N  # lattice size
-        self.m = np.longdouble(M)  # single spin magnetic moment
-        self.k = np.longdouble(K)  # boltzman constant
-        self.t = np.longdouble(T)  # / self.removeUnderflow # temperature in kelvins
+        self.m = M  # single spin magnetic moment
+        self.k = K  # boltzman constant
+        self.t = T  # / self.removeUnderflow # temperature in kelvins
         self.d = D  # system dimension
         self.tc = 2*J/(K*np.arcsinh(1))  # theoretical tc for 2d by onsanger
         self.randomFill = randomFill
@@ -433,15 +501,58 @@ class InquireIsing:
         # can be inputed if precomputed
         self.correlationTime = correlationTime
         # plotting colors
-        self.colors_ = cycle(mpl.colors.TABLEAU_COLORS.keys())
+        # self.colors_ = cycle(mpl.colors.TABLEAU_COLORS.keys())
 
         # data
         # size of block, mean variance in mean steady state magnetization, variance in the variance
-        self.blockSizeAndVarianceInMeanMagnetization = [[], [], []]
+        # self.blockSizeAndVarianceInMeanMagnetization = [[], [], []]
         self.meanStationaryMagnetizationAgainstTemperature = None
         self.equilibriumTimeAgainstTemperature = None
         self.correlationTimeAgainstTemperature = None
-    def visualizeEquilibriumTimes(self):
+        self.binderCumulantAgainstTemperature = None
+
+    def visualizeBinderCumulant(self):
+        # plots the average magnetization vs number of blocks used for measurement
+        # when the variance starts to grow wildly, we choose the largest block size with non-diverging error as our correlation length (or time)
+        plt.close()
+        lowerTemperature = self.lowerTemperature
+        deltaTemperature = self.deltaTemperature
+        numberOfMeasurements = self.numberOfMeasurements
+        attempts = self.dataPoints
+        # temperature and equilibriumTime and error
+        data = [[], [], []]
+        for a in range(attempts):
+            temperature = lowerTemperature + a * deltaTemperature
+            data[0].append(temperature)
+            # self.blockSizeAndVarianceInMeanMagnetization[0].append(blockSize)
+            binderCumulants = []
+            for j in range(numberOfMeasurements):
+                tempSys = Ising(name=self.name, N=self.n, H=self.h, T=temperature, D=self.d, J=self.j, randomFill=self.randomFill, K=self.k, M=self.m, equilibriumTime=self.equilibriumTime)
+                for i in range(self.steps):
+                    tempSys.stepForward()
+                # estimate equilibrium time needed
+                tempSys.visualizeMagnetizationPhaseSpace()
+                tempSys.estimateBinderCumulant()
+                binderCumulants.append(tempSys.binderCumulant)
+                # [meanMagnetization, errorMagnetization] = tempSys.meanStationaryMagnetization()
+                # errors.append(errorMagnetization)
+            data[1].append(np.mean(binderCumulants))
+            data[2].append(np.sqrt(np.var(binderCumulants)))
+        # update stored data
+        self.binderCumulantAgainstTemperature = data
+        # fig = plt.figure()
+        fig = plt.figure(figsize=(self.figureWidth * self.figureScale, self.figureHeight * self.figureScale), dpi=self.figureDpi)
+        # print(self.blockSizeAndVarianceInMeanMagnetization)
+        plt.errorbar(self.binderCumulantAgainstTemperature[0], self.binderCumulantAgainstTemperature[1], yerr=self.binderCumulantAgainstTemperature[2], fmt="+k")
+        # plt.axvline(x=self.equilibriumTime)
+        plt.title("\n".join(wrap("Ising Model, Dimension = "+str(tempSys.d)+", N = "+str(tempSys.n)+", Tc = "+str(sigfig.round(float(tempSys.tc), sigfigs=4))+"K, Time = "+str(tempSys.timeStep)+"a.u.", 60)))
+        plt.xlabel("Temperature / K")
+        plt.ylabel("Binder Cumulant / 1")
+        return fig
+
+
+
+    def visualizeEquilibriumTime(self):
         # plots the average magnetization vs number of blocks used for measurement
         # when the variance starts to grow wildly, we choose the largest block size with non-diverging error as our correlation length (or time)
         plt.close()
