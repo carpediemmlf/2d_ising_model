@@ -1,0 +1,108 @@
+%merlin.mbs apsrev4-1.bst 2010-07-25 4.21a (PWD, AO, DPC) hacked
+%Control: key (0)
+%Control: author (8) initials jnrlst
+%Control: editor formatted (1) identically to author
+%Control: production of article title (-1) disabled
+%Control: page (0) single
+%Control: year (1) truncated
+%Control: production of eprint (0) enabled
+\providecommand{\noopsort}[1]{}\providecommand{\singleletter}[1]{#1}%
+\begin{thebibliography}{7}%
+\makeatletter
+\providecommand \@ifxundefined [1]{%
+ \@ifx{#1\undefined}
+}%
+\providecommand \@ifnum [1]{%
+ \ifnum #1\expandafter \@firstoftwo
+ \else \expandafter \@secondoftwo
+ \fi
+}%
+\providecommand \@ifx [1]{%
+ \ifx #1\expandafter \@firstoftwo
+ \else \expandafter \@secondoftwo
+ \fi
+}%
+\providecommand \natexlab [1]{#1}%
+\providecommand \enquote  [1]{``#1''}%
+\providecommand \bibnamefont  [1]{#1}%
+\providecommand \bibfnamefont [1]{#1}%
+\providecommand \citenamefont [1]{#1}%
+\providecommand \href@noop [0]{\@secondoftwo}%
+\providecommand \href [0]{\begingroup \@sanitize@url \@href}%
+\providecommand \@href[1]{\@@startlink{#1}\@@href}%
+\providecommand \@@href[1]{\endgroup#1\@@endlink}%
+\providecommand \@sanitize@url [0]{\catcode `\\12\catcode `\$12\catcode
+  `\&12\catcode `\#12\catcode `\^12\catcode `\_12\catcode `\%12\relax}%
+\providecommand \@@startlink[1]{}%
+\providecommand \@@endlink[0]{}%
+\providecommand \url  [0]{\begingroup\@sanitize@url \@url }%
+\providecommand \@url [1]{\endgroup\@href {#1}{\urlprefix }}%
+\providecommand \urlprefix  [0]{URL }%
+\providecommand \Eprint [0]{\href }%
+\providecommand \doibase [0]{http://dx.doi.org/}%
+\providecommand \selectlanguage [0]{\@gobble}%
+\providecommand \bibinfo  [0]{\@secondoftwo}%
+\providecommand \bibfield  [0]{\@secondoftwo}%
+\providecommand \translation [1]{[#1]}%
+\providecommand \BibitemOpen [0]{}%
+\providecommand \bibitemStop [0]{}%
+\providecommand \bibitemNoStop [0]{.\EOS\space}%
+\providecommand \EOS [0]{\spacefactor3000\relax}%
+\providecommand \BibitemShut  [1]{\csname bibitem#1\endcsname}%
+\let\auto@bib@innerbib\@empty
+%</preamble>
+\bibitem [{\citenamefont {Block}\ \emph {et~al.}(2010)\citenamefont {Block},
+  \citenamefont {Virnau},\ and\ \citenamefont {Preis}}]{BLOCK20101549}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {B.}~\bibnamefont
+  {Block}}, \bibinfo {author} {\bibfnamefont {P.}~\bibnamefont {Virnau}}, \
+  and\ \bibinfo {author} {\bibfnamefont {T.}~\bibnamefont {Preis}},\ }\href
+  {\doibase https://doi.org/10.1016/j.cpc.2010.05.005} {\bibfield  {journal}
+  {\bibinfo  {journal} {Computer Physics Communications}\ }\textbf {\bibinfo
+  {volume} {181}},\ \bibinfo {pages} {1549} (\bibinfo {year}
+  {2010})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Mermin}\ and\ \citenamefont
+  {Wagner}(1966)}]{PhysRevLett.17.1133}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {N.~D.}\ \bibnamefont
+  {Mermin}}\ and\ \bibinfo {author} {\bibfnamefont {H.}~\bibnamefont
+  {Wagner}},\ }\href {\doibase 10.1103/PhysRevLett.17.1133} {\bibfield
+  {journal} {\bibinfo  {journal} {Phys. Rev. Lett.}\ }\textbf {\bibinfo
+  {volume} {17}},\ \bibinfo {pages} {1133} (\bibinfo {year}
+  {1966})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Onsager}(1944)}]{PhysRev.65.117}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {L.}~\bibnamefont
+  {Onsager}},\ }\href {\doibase 10.1103/PhysRev.65.117} {\bibfield  {journal}
+  {\bibinfo  {journal} {Phys. Rev.}\ }\textbf {\bibinfo {volume} {65}},\
+  \bibinfo {pages} {117} (\bibinfo {year} {1944})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Liccardo}\ and\ \citenamefont
+  {Fierro}(2013)}]{10.1371/journal.pone.0063935}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Liccardo}}\ and\ \bibinfo {author} {\bibfnamefont {A.}~\bibnamefont
+  {Fierro}},\ }\href {\doibase 10.1371/journal.pone.0063935} {\bibfield
+  {journal} {\bibinfo  {journal} {PLOS ONE}\ }\textbf {\bibinfo {volume} {8}},\
+  \bibinfo {pages} {1} (\bibinfo {year} {2013})}\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Selke}(2006)}]{Selke2006}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {W.}~\bibnamefont
+  {Selke}},\ }\href {\doibase 10.1140/epjb/e2006-00209-7} {\bibfield  {journal}
+  {\bibinfo  {journal} {European Physical Journal B}\ }\textbf {\bibinfo
+  {volume} {51}},\ \bibinfo {pages} {223} (\bibinfo {year} {2006})},\ \Eprint
+  {http://arxiv.org/abs/0603411} {arXiv:0603411 [cond-mat]} \BibitemShut
+  {NoStop}%
+\bibitem [{\citenamefont {Boardman}(2005)}]{soton45942}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {R.}~\bibnamefont
+  {Boardman}},\ }\emph {\bibinfo {title} {Computer simulation studies of
+  magnetic nanostructures}},\ \href {https://eprints.soton.ac.uk/45942/} {Ph.D.
+  thesis},\ \bibinfo  {school} {University of Southampton} (\bibinfo {year}
+  {2005})\BibitemShut {NoStop}%
+\bibitem [{\citenamefont {Buscher}(2020)}]{Buscher2020}%
+  \BibitemOpen
+  \bibfield  {author} {\bibinfo {author} {\bibfnamefont {D.}~\bibnamefont
+  {Buscher}},\ }\href@noop {} {\emph {\bibinfo {title} {{Part II Computational
+  Physics}}}},\ \bibinfo {type} {Tech. Rep.}\ (\bibinfo {year}
+  {2020})\BibitemShut {NoStop}%
+\end{thebibliography}%

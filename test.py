@@ -14,13 +14,13 @@ dimRange = 1
 
 # output figure type
 figureType = "png"
+"""
 # temperature
 tempLow = 206 # Kelvins
 deltaTemp = 40
 numOfTemps = 1
 # k = 1
 # j = 1
-"""
 for j in range(numOfTemps):
     for i in range(dimRange):
         dim = i + dimLow
@@ -63,17 +63,18 @@ for j in range(numOfTemps):
         print(datetime.now() - t)
 
 """
+
 dimLow = 2
 size = 11
 dimRange = 1
 for i in range(dimRange):
     dim = dimLow +i
     name = "visualization_d=" + str(dim) + "_n=" + str(size)
-    lowerTemperature = 20
-    dataPoints = 10
-    deltaTemperature = 0.1
+    lowerTemperature = 190
+    dataPoints = 20
+    deltaTemperature = 1
     steps = 10000
-    numberOfMeasurements = 3
+    numberOfMeasurements = 30
     path = os.getcwd() + "/" + name
     try:
         os.mkdir(path)
@@ -86,11 +87,13 @@ for i in range(dimRange):
     # mySys = Ising(name="testingNDIsing", N=size, D=dim, numberOfMeasurements=numberOfMeasurements)
     # for i in range(1000):
     #     mySys.stepForward()
+    print(inquireMySys.numberOfMeasurements)
     name = name + "_lowerTemperature=" + str(lowerTemperature) + "_deltaTemperature=" + str(deltaTemperature) + "_dataPoints=" + str(dataPoints)
 
     # inquire about properties
     inquireMySys.visualizeBinderCumulant().savefig(path + "/" + name + "_binder_cumulants." + figureType)
     # inquireMySys.visualizeStationaryMagnetization().savefig(path + "/" + name + "_stationary_magnetizations." + figureType)
     # inquireMySys.visualizeCorrelationTime().savefig(path + "/" + name + "_correlation_times." + figureType)
+    # inquireMySys.visualizeSpecificHeatiCapacityPerSite().savefig(path + "/" + name + "_specific_heat_capacities_per_site." + figureType)
     plt.close()
     print(datetime.now() - t)

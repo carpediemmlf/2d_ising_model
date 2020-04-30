@@ -1,0 +1,32 @@
+\BOOKMARK [0][-]{section*.2}{Investigating 2D Ferromagnetic Ising Model}{}% 2
+\BOOKMARK [1][-]{section*.1}{Abstract}{section*.2}% 1
+\BOOKMARK [1][-]{section*.3}{Introduction}{section*.2}% 3
+\BOOKMARK [1][-]{section*.4}{Theoretical analysis}{section*.2}% 4
+\BOOKMARK [2][-]{section*.5}{Curie Temperature}{section*.4}% 5
+\BOOKMARK [2][-]{section*.6}{Finite-size Scaling}{section*.4}% 6
+\BOOKMARK [2][-]{section*.7}{Specific Heat Capacity}{section*.4}% 7
+\BOOKMARK [2][-]{section*.8}{Ferromagnetic Hysteresis}{section*.4}% 8
+\BOOKMARK [1][-]{section*.9}{Computational Method}{section*.2}% 9
+\BOOKMARK [2][-]{section*.10}{Monte Carlo: from Metropolis to Checkerboard}{section*.9}% 10
+\BOOKMARK [3][-]{section*.12}{Metropolis Algorithm}{section*.10}% 11
+\BOOKMARK [3][-]{section*.15}{Checkerboard Algorithm}{section*.10}% 12
+\BOOKMARK [2][-]{section*.21}{Error Estimation}{section*.9}% 13
+\BOOKMARK [1][-]{section*.22}{Equilibrium Time}{section*.2}% 14
+\BOOKMARK [2][-]{section*.23}{Methods}{section*.22}% 15
+\BOOKMARK [2][-]{section*.24}{Results}{section*.22}% 16
+\BOOKMARK [1][-]{section*.30}{Correlation Time}{section*.2}% 17
+\BOOKMARK [2][-]{section*.31}{Methods}{section*.30}% 18
+\BOOKMARK [2][-]{section*.32}{Results}{section*.30}% 19
+\BOOKMARK [1][-]{section*.35}{Equilibrium Magnetization}{section*.2}% 20
+\BOOKMARK [2][-]{section*.36}{Method}{section*.35}% 21
+\BOOKMARK [2][-]{section*.37}{Result}{section*.35}% 22
+\BOOKMARK [1][-]{section*.40}{Finite Size Scaling of Curie Temperature from Specific Heat Capacity}{section*.2}% 23
+\BOOKMARK [2][-]{section*.41}{Method}{section*.40}% 24
+\BOOKMARK [2][-]{section*.42}{Result}{section*.40}% 25
+\BOOKMARK [1][-]{section*.48}{Hysteresis Simulation}{section*.2}% 26
+\BOOKMARK [2][-]{section*.49}{Method}{section*.48}% 27
+\BOOKMARK [2][-]{section*.50}{Result}{section*.48}% 28
+\BOOKMARK [1][-]{section*.53}{Discussions}{section*.2}% 29
+\BOOKMARK [1][-]{section*.54}{Summary}{section*.2}% 30
+\BOOKMARK [1][-]{section*.55}{Appendix}{section*.2}% 31
+\BOOKMARK [1][-]{section*.56}{References}{section*.2}% 32

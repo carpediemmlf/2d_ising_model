@@ -101,7 +101,7 @@ class TwoDIsing: # numerical values see iron from https://www.southampton.ac.uk/
         choices = list(choices)
         row = 0
         col = 0
-        random.shuffle(choices)
+        # random.shuffle(choices)
         while choices:
             choice = choices.pop()
             row = int(choice/self.n)
