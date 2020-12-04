@@ -6,6 +6,9 @@
 
 - Please read this readme file and install relevant python packages before running.
 
+## Working examples
+
+- A [report](https://github.com/carpediemmlf/ising_model/blob/master/report/report_preprint/apssamp.pdf) with code examples on determining the critical exponents, magnetic hysteresis effects etc.
 
 ## Installation
 
